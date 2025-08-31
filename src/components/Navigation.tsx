@@ -52,6 +52,11 @@ export const Navigation = () => {
               <Settings className="h-5 w-5" />
             </Button>
 
+            {/* Login Demo */}
+            <Button variant="outline" size="sm" asChild>
+              <a href="/login">Login Demo</a>
+            </Button>
+
             {/* User Profile */}
             <div className="flex items-center space-x-3">
               <div className="text-right hidden sm:block">
