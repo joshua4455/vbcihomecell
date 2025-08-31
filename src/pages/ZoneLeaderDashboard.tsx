@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigation } from "@/components/Navigation";
 import { Users, MapPin, Calendar, TrendingUp, Plus, Eye } from "lucide-react";
+import AlertNotifications from "@/components/AlertNotifications";
 
 const ZoneLeaderDashboard = () => {
   // Mock data for zones and cells
@@ -86,6 +87,9 @@ const ZoneLeaderDashboard = () => {
       <Navigation />
       
       <div className="container mx-auto p-6 space-y-6">
+        {/* Alert Notifications */}
+        <AlertNotifications userRole="zone-leader" />
+        
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Zone Leader Dashboard</h1>
