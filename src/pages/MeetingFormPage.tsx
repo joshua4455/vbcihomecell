@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Church, Plus, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -17,12 +18,61 @@ const MeetingFormPage = () => {
   const [attendees, setAttendees] = useState<number[]>([]);
   const [newVisitors, setNewVisitors] = useState([{ name: "", contact: "", notes: "" }]);
   const [formData, setFormData] = useState({
+    zone: "",
+    area: "",
+    zoneLeader: "",
+    areaLeader: "",
+    districtLeader: "",
+    districtPastor: "",
     timeOpened: "",
     timeClosed: "",
     offering: "",
     visitsCount: "",
     visitNotes: "",
   });
+
+  // Church hierarchy data
+  const zones = [
+    { id: "zone-a", name: "Zone A (Alpha)" },
+    { id: "zone-b", name: "Zone B (Beta)" },
+    { id: "zone-c", name: "Zone C (Gamma)" },
+    { id: "zone-d", name: "Zone D (Delta)" },
+  ];
+
+  const areas = [
+    { id: "area-1", name: "Area 1 - Central" },
+    { id: "area-2", name: "Area 2 - North" },
+    { id: "area-3", name: "Area 3 - South" },
+    { id: "area-4", name: "Area 4 - East" },
+    { id: "area-5", name: "Area 5 - West" },
+  ];
+
+  const zoneLeaders = [
+    { id: "zl-1", name: "Pastor Samuel Adebayo" },
+    { id: "zl-2", name: "Pastor Grace Okafor" },
+    { id: "zl-3", name: "Pastor James Eze" },
+    { id: "zl-4", name: "Pastor Ruth Akinola" },
+  ];
+
+  const areaLeaders = [
+    { id: "al-1", name: "Elder Michael Okoro" },
+    { id: "al-2", name: "Elder Faith Adamu" },
+    { id: "al-3", name: "Elder Peter Nwosu" },
+    { id: "al-4", name: "Elder Mary Ogundimu" },
+    { id: "al-5", name: "Elder David Yakubu" },
+  ];
+
+  const districtLeaders = [
+    { id: "dl-1", name: "Reverend Dr. Abraham Kalu" },
+    { id: "dl-2", name: "Reverend Dr. Victoria Chukwu" },
+    { id: "dl-3", name: "Reverend Dr. Joseph Bello" },
+  ];
+
+  const districtPastors = [
+    { id: "dp-1", name: "Bishop Matthew Ogbonna" },
+    { id: "dp-2", name: "Bishop Helen Usman" },
+    { id: "dp-3", name: "Bishop Emmanuel Okafor" },
+  ];
 
   const cellMembers = [
     { id: 1, name: "John Doe", phone: "+234 801 234 5678" },
@@ -115,6 +165,109 @@ const MeetingFormPage = () => {
               <CardTitle>Meeting Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Church Hierarchy Section */}
+              <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
+                <h3 className="text-sm font-medium text-foreground">Church Hierarchy</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="zone">Zone</Label>
+                    <Select value={formData.zone} onValueChange={(value) => setFormData({...formData, zone: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Zone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {zones.map((zone) => (
+                          <SelectItem key={zone.id} value={zone.id}>
+                            {zone.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="area">Area</Label>
+                    <Select value={formData.area} onValueChange={(value) => setFormData({...formData, area: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Area" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {areas.map((area) => (
+                          <SelectItem key={area.id} value={area.id}>
+                            {area.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="zoneLeader">Zone Leader</Label>
+                    <Select value={formData.zoneLeader} onValueChange={(value) => setFormData({...formData, zoneLeader: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Zone Leader" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {zoneLeaders.map((leader) => (
+                          <SelectItem key={leader.id} value={leader.id}>
+                            {leader.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="areaLeader">Area Leader</Label>
+                    <Select value={formData.areaLeader} onValueChange={(value) => setFormData({...formData, areaLeader: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Area Leader" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {areaLeaders.map((leader) => (
+                          <SelectItem key={leader.id} value={leader.id}>
+                            {leader.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="districtLeader">District Leader</Label>
+                    <Select value={formData.districtLeader} onValueChange={(value) => setFormData({...formData, districtLeader: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select District Leader" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districtLeaders.map((leader) => (
+                          <SelectItem key={leader.id} value={leader.id}>
+                            {leader.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="districtPastor">District Pastor</Label>
+                    <Select value={formData.districtPastor} onValueChange={(value) => setFormData({...formData, districtPastor: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select District Pastor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districtPastors.map((pastor) => (
+                          <SelectItem key={pastor.id} value={pastor.id}>
+                            {pastor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Meeting Times and Offering */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="timeOpened">Time Opened</Label>
