@@ -13,8 +13,12 @@ const Login = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo login - navigate to cell dashboard
-    window.location.href = "/dashboard";
+    // Demo login - check credentials and navigate accordingly
+    if (email === "admin@church.com" && password === "admin123") {
+      window.location.href = "/admin";
+    } else {
+      window.location.href = "/dashboard";
+    }
   };
 
   return (
@@ -98,8 +102,8 @@ const Login = () => {
           <CardContent className="pt-4">
             <div className="text-sm text-muted-foreground">
               <p className="font-medium mb-2">Demo Credentials:</p>
-              <p>Email: leader@cell1.com</p>
-              <p>Password: demo123</p>
+              <p><strong>Cell Leader:</strong> leader@cell1.com / demo123</p>
+              <p><strong>Super Admin:</strong> admin@church.com / admin123</p>
               <p className="mt-2 text-xs">
                 * This is a demo interface. Real authentication requires Supabase integration.
               </p>

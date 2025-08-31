@@ -57,6 +57,11 @@ export const Navigation = () => {
               <a href="/login">Login Demo</a>
             </Button>
 
+            {/* Admin Panel */}
+            <Button variant="secondary" size="sm" asChild>
+              <a href="/admin">Admin Panel</a>
+            </Button>
+
             {/* User Profile */}
             <div className="flex items-center space-x-3">
               <div className="text-right hidden sm:block">
