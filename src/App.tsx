@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import CellDashboard from "./pages/CellDashboard";
 import MeetingFormPage from "./pages/MeetingFormPage";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import ZoneLeaderDashboard from "./pages/ZoneLeaderDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/dashboard" element={<CellDashboard />} />
           <Route path="/meeting-form" element={<MeetingFormPage />} />
           <Route path="/admin" element={<SuperAdminDashboard />} />
+          <Route path="/zone-dashboard" element={<ZoneLeaderDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

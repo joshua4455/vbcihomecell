@@ -16,6 +16,8 @@ const Login = () => {
     // Demo login - check credentials and navigate accordingly
     if (email === "admin@church.com" && password === "admin123") {
       window.location.href = "/admin";
+    } else if (email === "zone@church.com" && password === "zone123") {
+      window.location.href = "/zone-dashboard";
     } else {
       window.location.href = "/dashboard";
     }
@@ -103,6 +105,7 @@ const Login = () => {
             <div className="text-sm text-muted-foreground">
               <p className="font-medium mb-2">Demo Credentials:</p>
               <p><strong>Cell Leader:</strong> leader@cell1.com / demo123</p>
+              <p><strong>Zone Leader:</strong> zone@church.com / zone123</p>
               <p><strong>Super Admin:</strong> admin@church.com / admin123</p>
               <p className="mt-2 text-xs">
                 * This is a demo interface. Real authentication requires Supabase integration.
