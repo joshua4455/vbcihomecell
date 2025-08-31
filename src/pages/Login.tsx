@@ -13,8 +13,8 @@ const Login = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo login - just navigate to dashboard
-    window.location.href = "/";
+    // Demo login - navigate to cell dashboard
+    window.location.href = "/dashboard";
   };
 
   return (
