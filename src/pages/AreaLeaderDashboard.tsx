@@ -433,8 +433,8 @@ const AreaLeaderDashboard = () => {
       summary: {
         totalOfferings,
         averageOffering: areaMeetings.length > 0 ? Math.round(totalOfferings / areaMeetings.length) : 0,
-        highestOffering: Math.max(...offeringData.map(d => d.offering), 0),
-        lowestOffering: Math.min(...offeringData.map(d => d.offering), 0),
+        highestOffering: offeringData.length > 0 ? Math.max(...offeringData.map(d => d.offering)) : 0,
+        lowestOffering: offeringData.length > 0 ? Math.min(...offeringData.map(d => d.offering)) : 0,
         averagePerPerson: areaMeetings.length > 0 ? Math.round(totalOfferings / (offeringData.reduce((sum, d) => sum + d.attendees, 0) || 1)) : 0
       }
     };
@@ -487,16 +487,16 @@ const AreaLeaderDashboard = () => {
       const rows = data.data.map((row: any) => [row.date, row.cellName, row.attendees, row.totalMembers, row.percentage + '%']);
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     } else if (data.type === 'growth') {
-      const headers = ['Week', 'Meetings', 'Attendees', 'Offerings', 'Active Cells', 'New Members'];
-      const rows = (data.data as any[]).map((row) => [row.week, row.meetings, row.attendees, row.offerings, row.activeCells, row.newMembers || 0]);
+      const headers = ['Week', 'Meetings', 'Attendees', 'Offerings (GHS)', 'Active Cells', 'New Members'];
+      const rows = (data.data as any[]).map((row) => [row.week, row.meetings, row.attendees, `₵${row.offerings}`, row.activeCells, row.newMembers || 0]);
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     } else if (data.type === 'offering') {
-      const headers = ['Date', 'Cell Name', 'Offering', 'Attendees', 'Per Person'];
-      const rows = data.data.map((row: any) => [row.date, row.cellName, row.offering, row.attendees, row.perPerson]);
+      const headers = ['Date', 'Cell Name', 'Offering (GHS)', 'Attendees', 'Per Person (GHS)'];
+      const rows = data.data.map((row: any) => [row.date, row.cellName, `₵${row.offering}`, row.attendees, `₵${row.perPerson}`]);
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     } else if (data.type === 'cellPerformance') {
-      const headers = ['Cell Name', 'Leader', 'Members', 'Meetings', 'Total Offerings', 'Avg Attendance', 'Meeting Day', 'Status'];
-      const rows = data.data.map((row: any) => [row.name, row.leader, row.members, row.meetings, row.totalOfferings, row.averageAttendance, row.meetingDay, row.status]);
+      const headers = ['Cell Name', 'Leader', 'Members', 'Meetings', 'Total Offerings (GHS)', 'Avg Attendance', 'Meeting Day', 'Status'];
+      const rows = data.data.map((row: any) => [row.name, row.leader, row.members, row.meetings, `₵${row.totalOfferings}`, row.averageAttendance, row.meetingDay, row.status]);
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     }
     return '';
@@ -1107,19 +1107,19 @@ const AreaLeaderDashboard = () => {
                         <h3 className="text-lg font-semibold mb-3">Offering Summary</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           <div className="text-center p-4 bg-muted/30 rounded-lg">
-                            <p className="text-2xl font-bold text-primary">{reportData.summary.totalOfferings}</p>
+                            <p className="text-2xl font-bold text-primary">₵{Number(reportData.summary.totalOfferings || 0).toLocaleString()}</p>
                             <p className="text-sm text-muted-foreground">Total Offerings</p>
                           </div>
                           <div className="text-center p-4 bg-muted/30 rounded-lg">
-                            <p className="text-2xl font-bold text-green-600">{reportData.summary.averageOffering}</p>
+                            <p className="text-2xl font-bold text-green-600">₵{Number(reportData.summary.averageOffering || 0).toLocaleString()}</p>
                             <p className="text-sm text-muted-foreground">Average Offering</p>
                           </div>
                           <div className="text-center p-4 bg-muted/30 rounded-lg">
-                            <p className="text-2xl font-bold text-orange-600">{reportData.summary.highestOffering}</p>
+                            <p className="text-2xl font-bold text-orange-600">₵{Number(reportData.summary.highestOffering || 0).toLocaleString()}</p>
                             <p className="text-sm text-muted-foreground">Highest Offering</p>
                           </div>
                           <div className="text-center p-4 bg-muted/30 rounded-lg">
-                            <p className="text-2xl font-bold text-red-600">{reportData.summary.lowestOffering}</p>
+                            <p className="text-2xl font-bold text-red-600">₵{Number(reportData.summary.lowestOffering || 0).toLocaleString()}</p>
                             <p className="text-sm text-muted-foreground">Lowest Offering</p>
                           </div>
                         </div>
@@ -1130,7 +1130,7 @@ const AreaLeaderDashboard = () => {
                               <div>
                                 <p className="font-medium">{row.cellName}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {row.attendees} attendees • {row.offering} offering
+                                  {row.attendees} attendees • ₵{(row.offering || 0).toLocaleString()} offering
                                 </p>
                               </div>
                               <div className="text-right space-y-1">
