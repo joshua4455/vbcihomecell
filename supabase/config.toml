@@ -1,0 +1,3 @@
+[functions]
+  [functions.provision-user]
+  verify_jwt = false

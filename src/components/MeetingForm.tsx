@@ -9,26 +9,45 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
-// Mock data for members
-const cellMembers = [
-  { id: 1, name: "John Smith", phone: "+1234567890" },
-  { id: 2, name: "Mary Johnson", phone: "+1234567891" },
-  { id: 3, name: "David Brown", phone: "+1234567892" },
-  { id: 4, name: "Sarah Davis", phone: "+1234567893" },
-  { id: 5, name: "Michael Wilson", phone: "+1234567894" },
-  { id: 6, name: "Lisa Anderson", phone: "+1234567895" },
-  { id: 7, name: "Robert Taylor", phone: "+1234567896" },
-  { id: 8, name: "Jennifer White", phone: "+1234567897" }
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { useData } from "@/contexts/DataContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const MeetingForm = () => {
-  const [selectedZone, setSelectedZone] = useState("");
-  const [selectedCell, setSelectedCell] = useState("");
-  const [attendees, setAttendees] = useState<number[]>([]);
-  const [newVisitors, setNewVisitors] = useState([{ name: "", contact: "", notes: "" }]);
+  const { user } = useAuth();
+  const { cells, areas, members, addMeeting } = useData();
+  const { toast } = useToast();
+  
+  // Get the current user's cell
+  const currentCell =
+    cells.find((cell: any) => cell.id === (user as any)?.cell_id) ||
+    cells.find((cell: any) => (cell as any).leader_id === (user as any)?.id);
+  const currentArea =
+    areas.find((area: any) => area.id === (user as any)?.area_id) ||
+    areas.find((area: any) => area.id === (currentCell as any)?.area_id);
+  
+  // Get real cell members instead of mock data
+  const cellMembers = currentCell
+    ? (members as any[]).filter((m: any) => (m as any).cell_id === (currentCell as any).id)
+    : [];
+  
+  const [selectedArea, setSelectedArea] = useState((user as any)?.area_id || "");
+  const [selectedCell, setSelectedCell] = useState((user as any)?.cell_id || "");
+  const [attendees, setAttendees] = useState<string[]>([]);
+  const [newVisitors, setNewVisitors] = useState([{ name: "", contact: "", notes: "", isConvert: false, followUpRequired: false }]);
+  
+  // Form data state
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    timeOpened: "",
+    timeClosed: "",
+    offering: 0,
+    visits: 0,
+    visitNotes: "",
+    status: "draft" as "draft" | "completed"
+  });
 
-  const handleAttendanceChange = (memberId: number, checked: boolean) => {
+  const handleAttendanceChange = (memberId: string, checked: boolean) => {
     if (checked) {
       setAttendees([...attendees, memberId]);
     } else {
@@ -37,10 +56,10 @@ export const MeetingForm = () => {
   };
 
   const addNewVisitor = () => {
-    setNewVisitors([...newVisitors, { name: "", contact: "", notes: "" }]);
+    setNewVisitors([...newVisitors, { name: "", contact: "", notes: "", isConvert: false, followUpRequired: false }]);
   };
 
-  const updateVisitor = (index: number, field: string, value: string) => {
+  const updateVisitor = (index: number, field: string, value: string | boolean) => {
     const updated = [...newVisitors];
     updated[index] = { ...updated[index], [field]: value };
     setNewVisitors(updated);
@@ -48,6 +67,96 @@ export const MeetingForm = () => {
 
   const removeVisitor = (index: number) => {
     setNewVisitors(newVisitors.filter((_, i) => i !== index));
+  };
+
+  // Form submission functions
+  const handleSaveAsDraft = () => {
+    if (!currentCell) {
+      toast({
+        title: "Error",
+        description: "No cell assigned. Please contact your area leader.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Persist using Supabase Meeting schema
+    const meetingData: any = {
+      cell_id: (currentCell as any).id,
+      date: new Date(formData.date).toISOString(),
+      attendance_count: attendees.length,
+      offering_amount: formData.offering,
+      notes: formData.visitNotes || undefined,
+    };
+
+    addMeeting(meetingData as any);
+    
+    toast({
+      title: "Draft Saved",
+      description: "Meeting record has been saved as draft successfully.",
+    });
+  };
+
+  const handleSubmitMeeting = () => {
+    if (!currentCell) {
+      toast({
+        title: "Error",
+        description: "No cell assigned. Please contact your area leader.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.timeOpened || !formData.timeClosed) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in meeting start and end times.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (attendees.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please select at least one attendee.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Persist using Supabase Meeting schema
+    const meetingData: any = {
+      cell_id: (currentCell as any).id,
+      date: new Date(formData.date).toISOString(),
+      attendance_count: attendees.length,
+      offering_amount: formData.offering,
+      notes: formData.visitNotes || undefined,
+    };
+
+    addMeeting(meetingData as any);
+    
+    // Reset form
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      timeOpened: "",
+      timeClosed: "",
+      offering: 0,
+      visits: 0,
+      visitNotes: "",
+      status: "draft"
+    });
+    setAttendees([]);
+    setNewVisitors([{ name: "", contact: "", notes: "", isConvert: false, followUpRequired: false }]);
+    
+    toast({
+      title: "Meeting Submitted",
+      description: "Meeting record has been submitted successfully.",
+    });
+  };
+
+  const handleInputChange = (field: string, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -61,37 +170,36 @@ export const MeetingForm = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="zone">Zone</Label>
-              <Select value={selectedZone} onValueChange={setSelectedZone}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Zone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 8 }, (_, i) => (
-                    <SelectItem key={i + 1} value={`zone-${i + 1}`}>
-                      Zone {String.fromCharCode(65 + i)} ({["Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta"][i]})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="date">Meeting Date</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleInputChange("date", e.target.value)}
+                className="w-full"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="area">Area</Label>
+              <Input
+                id="area"
+                value={currentCell ? (areas as any[]).find((a: any) => a.id === (currentCell as any).area_id)?.name || "Unknown Area" : "No Area Assigned"}
+                disabled
+                className="w-full bg-muted"
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="cell">Cell</Label>
-              <Select value={selectedCell} onValueChange={setSelectedCell} disabled={!selectedZone}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Cell" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedZone && Array.from({ length: 5 }, (_, i) => (
-                    <SelectItem key={i + 1} value={`cell-${i + 1}`}>
-                      Cell {selectedZone.split('-')[1]}-{i + 1}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="cell"
+                value={currentCell?.name || "No Cell Assigned"}
+                disabled
+                className="w-full bg-muted"
+              />
             </div>
           </div>
 
@@ -101,6 +209,8 @@ export const MeetingForm = () => {
               <Input
                 id="timeOpened"
                 type="time"
+                value={formData.timeOpened}
+                onChange={(e) => handleInputChange("timeOpened", e.target.value)}
                 className="w-full"
               />
             </div>
@@ -110,17 +220,21 @@ export const MeetingForm = () => {
               <Input
                 id="timeClosed"
                 type="time"
+                value={formData.timeClosed}
+                onChange={(e) => handleInputChange("timeClosed", e.target.value)}
                 className="w-full"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="offering">Offering Amount ($)</Label>
+              <Label htmlFor="offering">Offering Amount (₵)</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="offering"
                   type="number"
+                  value={formData.offering}
+                  onChange={(e) => handleInputChange("offering", parseFloat(e.target.value) || 0)}
                   placeholder="0.00"
                   className="pl-10"
                   min="0"
@@ -183,6 +297,8 @@ export const MeetingForm = () => {
             <Input
               id="visits"
               type="number"
+              value={formData.visits}
+              onChange={(e) => handleInputChange("visits", parseInt(e.target.value) || 0)}
               placeholder="Number of visits"
               min="0"
             />
@@ -192,8 +308,10 @@ export const MeetingForm = () => {
             <Label htmlFor="visitNotes">Visit Notes (Optional)</Label>
             <Textarea
               id="visitNotes"
+              value={formData.visitNotes}
+              onChange={(e) => handleInputChange("visitNotes", e.target.value)}
               placeholder="Brief notes about visits made..."
-              className="min-h-[80px]"
+              className="min-h-[60px]"
             />
           </div>
         </CardContent>
@@ -268,6 +386,30 @@ export const MeetingForm = () => {
                       className="min-h-[60px]"
                     />
                   </div>
+                  
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`visitor-convert-${index}`}
+                        checked={visitor.isConvert}
+                        onCheckedChange={(checked) => updateVisitor(index, "isConvert", checked as boolean)}
+                      />
+                      <Label htmlFor={`visitor-convert-${index}`} className="text-sm">
+                        Converted to Christ
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`visitor-followup-${index}`}
+                        checked={visitor.followUpRequired}
+                        onCheckedChange={(checked) => updateVisitor(index, "followUpRequired", checked as boolean)}
+                      />
+                      <Label htmlFor={`visitor-followup-${index}`} className="text-sm">
+                        Follow-up Required
+                      </Label>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -279,10 +421,18 @@ export const MeetingForm = () => {
 
       {/* Submit Button */}
       <div className="flex justify-end space-x-4">
-        <Button variant="outline" size="lg">
+        <Button 
+          variant="outline" 
+          size="lg"
+          onClick={handleSaveAsDraft}
+        >
           Save as Draft
         </Button>
-        <Button size="lg" className="bg-gradient-primary">
+        <Button 
+          size="lg" 
+          className="bg-gradient-primary"
+          onClick={handleSubmitMeeting}
+        >
           <Save className="mr-2 h-5 w-5" />
           Submit Meeting Record
         </Button>

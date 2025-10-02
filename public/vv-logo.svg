@@ -1,0 +1,30 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="50" fill="#2D1B69"/>
+  
+  <!-- Laurel wreath -->
+  <g fill="#8B5CF6" opacity="0.8">
+    <!-- Left side of wreath -->
+    <path d="M20 45 C15 40, 12 35, 15 30 C18 35, 22 40, 25 45 C22 50, 18 55, 15 60 C12 55, 15 50, 20 45 Z"/>
+    <path d="M25 55 C20 50, 17 45, 20 40 C23 45, 27 50, 30 55 C27 60, 23 65, 20 70 C17 65, 20 60, 25 55 Z"/>
+    
+    <!-- Right side of wreath -->
+    <path d="M80 45 C85 40, 88 35, 85 30 C82 35, 78 40, 75 45 C78 50, 82 55, 85 60 C88 55, 85 50, 80 45 Z"/>
+    <path d="M75 55 C80 50, 83 45, 80 40 C77 45, 73 50, 70 55 C73 60, 77 65, 80 70 C83 65, 80 60, 75 55 Z"/>
+    
+    <!-- Bottom wreath -->
+    <path d="M35 75 C30 70, 27 65, 30 60 C33 65, 37 70, 40 75 C45 78, 50 80, 55 78 C60 75, 63 70, 67 65 C70 60, 73 65, 70 70 C65 75, 60 78, 50 80 C40 78, 35 75, 35 75 Z"/>
+  </g>
+  
+  <!-- Main VV letters -->
+  <g fill="white">
+    <!-- Left V -->
+    <path d="M35 25 L40 25 L45 45 L50 25 L55 25 L48 50 L42 50 Z"/>
+    <!-- Right V -->
+    <path d="M45 25 L50 25 L55 45 L60 25 L65 25 L58 50 L52 50 Z"/>
+  </g>
+  
+  <!-- Shield outline -->
+  <path d="M30 20 Q30 15, 35 15 L65 15 Q70 15, 70 20 L70 45 Q70 55, 60 65 L50 75 L40 65 Q30 55, 30 45 Z" 
+        fill="none" stroke="#8B5CF6" stroke-width="2" opacity="0.6"/>
+</svg>

@@ -6,24 +6,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Church, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useData } from "@/contexts/DataContext";
+import { Logo } from "@/components/Logo";
+import { Meeting, Visitor } from "@/lib/types";
 
 const MeetingFormPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { cells, addMeeting, members, areas } = useData();
   
-  const [attendees, setAttendees] = useState<number[]>([]);
-  const [newVisitors, setNewVisitors] = useState([{ name: "", contact: "", notes: "" }]);
+  const [attendees, setAttendees] = useState<string[]>([]);
+  const [newVisitors, setNewVisitors] = useState<Omit<Visitor, 'id'>[]>([
+    { name: "", contact: "", notes: "", isConvert: false, followUpRequired: false }
+  ]);
   const [formData, setFormData] = useState({
-    zone: "",
-    area: "",
-    zoneLeader: "",
-    areaLeader: "",
-    districtLeader: "",
-    districtPastor: "",
+    date: new Date().toISOString().split('T')[0],
     timeOpened: "",
     timeClosed: "",
     offering: "",
@@ -31,68 +34,15 @@ const MeetingFormPage = () => {
     visitNotes: "",
   });
 
-  // Church hierarchy data
-  const zones = [
-    { id: "zone-a", name: "Zone A (Alpha)" },
-    { id: "zone-b", name: "Zone B (Beta)" },
-    { id: "zone-c", name: "Zone C (Gamma)" },
-    { id: "zone-d", name: "Zone D (Delta)" },
-  ];
+  // Get current user's cell
+  const currentCell: any =
+    cells.find((cell: any) => cell.id === (user as any)?.cell_id) ||
+    cells.find((cell: any) => (cell as any).leader_id === (user as any)?.id);
+  const cellMembers = currentCell
+    ? (members as any[]).filter((m: any) => (m as any).cell_id === (currentCell as any).id)
+    : [];
 
-  const areas = [
-    { id: "area-1", name: "Area 1 - Central" },
-    { id: "area-2", name: "Area 2 - North" },
-    { id: "area-3", name: "Area 3 - South" },
-    { id: "area-4", name: "Area 4 - East" },
-    { id: "area-5", name: "Area 5 - West" },
-  ];
-
-  const zoneLeaders = [
-    { id: "zl-1", name: "Pastor Samuel Adebayo" },
-    { id: "zl-2", name: "Pastor Grace Okafor" },
-    { id: "zl-3", name: "Pastor James Eze" },
-    { id: "zl-4", name: "Pastor Ruth Akinola" },
-  ];
-
-  const areaLeaders = [
-    { id: "al-1", name: "Elder Michael Okoro" },
-    { id: "al-2", name: "Elder Faith Adamu" },
-    { id: "al-3", name: "Elder Peter Nwosu" },
-    { id: "al-4", name: "Elder Mary Ogundimu" },
-    { id: "al-5", name: "Elder David Yakubu" },
-  ];
-
-  const districtLeaders = [
-    { id: "dl-1", name: "Reverend Dr. Abraham Kalu" },
-    { id: "dl-2", name: "Reverend Dr. Victoria Chukwu" },
-    { id: "dl-3", name: "Reverend Dr. Joseph Bello" },
-  ];
-
-  const districtPastors = [
-    { id: "dp-1", name: "Bishop Matthew Ogbonna" },
-    { id: "dp-2", name: "Bishop Helen Usman" },
-    { id: "dp-3", name: "Bishop Emmanuel Okafor" },
-  ];
-
-  const cellMembers = [
-    { id: 1, name: "John Doe", phone: "+234 801 234 5678" },
-    { id: 2, name: "Mary Johnson", phone: "+234 802 345 6789" },
-    { id: 3, name: "David Wilson", phone: "+234 803 456 7890" },
-    { id: 4, name: "Sarah Brown", phone: "+234 804 567 8901" },
-    { id: 5, name: "Michael Davis", phone: "+234 805 678 9012" },
-    { id: 6, name: "Lisa Anderson", phone: "+234 806 789 0123" },
-    { id: 7, name: "James Wilson", phone: "+234 807 890 1234" },
-    { id: 8, name: "Emma Taylor", phone: "+234 808 901 2345" },
-    { id: 9, name: "Robert Jones", phone: "+234 809 012 3456" },
-    { id: 10, name: "Anna Garcia", phone: "+234 810 123 4567" },
-    { id: 11, name: "William Miller", phone: "+234 811 234 5678" },
-    { id: 12, name: "Olivia Davis", phone: "+234 812 345 6789" },
-    { id: 13, name: "Benjamin Moore", phone: "+234 813 456 7890" },
-    { id: 14, name: "Sophia Jackson", phone: "+234 814 567 8901" },
-    { id: 15, name: "Lucas White", phone: "+234 815 678 9012" }
-  ];
-
-  const handleAttendanceChange = (memberId: number, checked: boolean) => {
+  const handleAttendanceChange = (memberId: string, checked: boolean) => {
     if (checked) {
       setAttendees([...attendees, memberId]);
     } else {
@@ -101,10 +51,10 @@ const MeetingFormPage = () => {
   };
 
   const addNewVisitor = () => {
-    setNewVisitors([...newVisitors, { name: "", contact: "", notes: "" }]);
+    setNewVisitors([...newVisitors, { name: "", contact: "", notes: "", isConvert: false, followUpRequired: false }]);
   };
 
-  const updateVisitor = (index: number, field: string, value: string) => {
+  const updateVisitor = (index: number, field: keyof Visitor, value: string | boolean) => {
     const updated = newVisitors.map((visitor, i) => 
       i === index ? { ...visitor, [field]: value } : visitor
     );
@@ -117,10 +67,51 @@ const MeetingFormPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!currentCell) {
+      toast({
+        title: "Error",
+        description: "No cell found for current user.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.timeOpened || !formData.timeClosed || !formData.offering) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create meeting object
+    const meetingData: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'> = {
+      cellId: currentCell.id,
+      areaId: currentCell.area_id,
+      date: new Date(formData.date),
+      timeOpened: formData.timeOpened,
+      timeClosed: formData.timeClosed,
+      attendees,
+      offering: parseFloat(formData.offering),
+      newVisitors: newVisitors.filter(v => v.name).map(v => ({
+        ...v,
+        id: `visitor-${Date.now()}-${Math.random()}`,
+      })),
+      visitsCount: parseInt(formData.visitsCount) || 0,
+      visitNotes: formData.visitNotes,
+      status: 'submitted'
+    };
+
+    // Add meeting to data context
+    addMeeting(meetingData);
+
     toast({
       title: "Meeting Record Saved",
       description: `Successfully recorded meeting with ${attendees.length} attendees and ${newVisitors.filter(v => v.name).length} new visitors.`,
     });
+    
     navigate("/dashboard");
   };
 
@@ -130,6 +121,18 @@ const MeetingFormPage = () => {
       description: "Meeting record has been saved as draft.",
     });
   };
+
+  if (!currentCell) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Logo size="xl" className="text-muted-foreground mx-auto" />
+          <h2 className="text-xl font-semibold">No Cell Assigned</h2>
+          <p className="text-muted-foreground">Please contact your area leader to be assigned to a cell.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20">
@@ -146,11 +149,11 @@ const MeetingFormPage = () => {
             <Separator orientation="vertical" className="h-6" />
             <div className="flex items-center space-x-3">
               <div className="bg-primary/10 p-2 rounded-lg">
-                <Church className="h-5 w-5 text-primary" />
+                <Logo size="md" className="text-primary" />
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-foreground">Record Meeting</h1>
-                <p className="text-sm text-muted-foreground">Victory Cell 1 • Zone A</p>
+                <p className="text-sm text-muted-foreground">{currentCell.name} • {(currentCell as any).area_id}</p>
               </div>
             </div>
           </div>
@@ -165,110 +168,18 @@ const MeetingFormPage = () => {
               <CardTitle>Meeting Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Church Hierarchy Section */}
-              <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
-                <h3 className="text-sm font-medium text-foreground">Church Hierarchy</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="zone">Zone</Label>
-                    <Select value={formData.zone} onValueChange={(value) => setFormData({...formData, zone: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Zone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {zones.map((zone) => (
-                          <SelectItem key={zone.id} value={zone.id}>
-                            {zone.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="area">Area</Label>
-                    <Select value={formData.area} onValueChange={(value) => setFormData({...formData, area: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Area" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {areas.map((area) => (
-                          <SelectItem key={area.id} value={area.id}>
-                            {area.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="zoneLeader">Zone Leader</Label>
-                    <Select value={formData.zoneLeader} onValueChange={(value) => setFormData({...formData, zoneLeader: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Zone Leader" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {zoneLeaders.map((leader) => (
-                          <SelectItem key={leader.id} value={leader.id}>
-                            {leader.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="areaLeader">Area Leader</Label>
-                    <Select value={formData.areaLeader} onValueChange={(value) => setFormData({...formData, areaLeader: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Area Leader" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {areaLeaders.map((leader) => (
-                          <SelectItem key={leader.id} value={leader.id}>
-                            {leader.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="districtLeader">District Leader</Label>
-                    <Select value={formData.districtLeader} onValueChange={(value) => setFormData({...formData, districtLeader: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select District Leader" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {districtLeaders.map((leader) => (
-                          <SelectItem key={leader.id} value={leader.id}>
-                            {leader.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="districtPastor">District Pastor</Label>
-                    <Select value={formData.districtPastor} onValueChange={(value) => setFormData({...formData, districtPastor: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select District Pastor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {districtPastors.map((pastor) => (
-                          <SelectItem key={pastor.id} value={pastor.id}>
-                            {pastor.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                  <Label htmlFor="date">Meeting Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    required
+                  />
               </div>
 
-              {/* Meeting Times and Offering */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="timeOpened">Time Opened</Label>
                   <Input
@@ -279,6 +190,7 @@ const MeetingFormPage = () => {
                     required
                   />
                 </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="timeClosed">Time Closed</Label>
                   <Input
@@ -290,8 +202,9 @@ const MeetingFormPage = () => {
                   />
                 </div>
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="offering">Offering Amount (₦)</Label>
+                <Label htmlFor="offering">Offering Amount (₵)</Label>
                 <Input
                   id="offering"
                   type="number"
@@ -427,6 +340,24 @@ const MeetingFormPage = () => {
                           onChange={(e) => updateVisitor(index, "notes", e.target.value)}
                         />
                       </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`convert-${index}`}
+                            checked={visitor.isConvert}
+                            onCheckedChange={(checked) => updateVisitor(index, "isConvert", checked as boolean)}
+                          />
+                          <Label htmlFor={`convert-${index}`}>New Convert</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`followup-${index}`}
+                            checked={visitor.followUpRequired}
+                            onCheckedChange={(checked) => updateVisitor(index, "followUpRequired", checked as boolean)}
+                          />
+                          <Label htmlFor={`followup-${index}`}>Follow-up Required</Label>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -437,6 +368,7 @@ const MeetingFormPage = () => {
           {/* Submit Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button type="submit" className="flex-1">
+              <Save className="mr-2 h-4 w-4" />
               Submit Meeting Record
             </Button>
             <Button type="button" variant="outline" onClick={handleSaveDraft}>

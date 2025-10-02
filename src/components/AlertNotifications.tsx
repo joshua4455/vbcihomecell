@@ -3,73 +3,51 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bell, AlertCircle, MessageSquare, X } from "lucide-react";
-import { useState } from "react";
-
-interface AlertData {
-  id: number;
-  title: string;
-  message: string;
-  type: "info" | "warning" | "alert";
-  targetAudience: string;
-  priority: "low" | "normal" | "high";
-  createdAt: string;
-  active: boolean;
-}
+import { useState, useEffect } from "react";
+import { useData } from "@/contexts/DataContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AlertNotificationsProps {
-  userRole: "cell-leader" | "zone-leader" | "super-admin";
+  userRole: "cell-leader" | "area-leader" | "zone-leader" | "super-admin";
 }
 
 const AlertNotifications = ({ userRole }: AlertNotificationsProps) => {
-  // Demo alerts - in real app, this would come from backend
-  const allAlerts: AlertData[] = [
-    {
-      id: 1,
-      title: "Zone Leader Meeting",
-      message: "Monthly zone leader meeting scheduled for next Friday at 6 PM. Please confirm your attendance.",
-      type: "info",
-      targetAudience: "zone-leaders",
-      priority: "high",
-      createdAt: "2 hours ago",
-      active: true
-    },
-    {
-      id: 2,
-      title: "Cell Reports Due",
-      message: "All cell leaders must submit their monthly reports by end of week. Late submissions will be followed up.",
-      type: "warning",
-      targetAudience: "cell-leaders",
-      priority: "normal",
-      createdAt: "1 day ago",
-      active: true
-    },
-    {
-      id: 3,
-      title: "System Maintenance",
-      message: "The system will undergo maintenance this Sunday from 2-4 AM. Expect brief service interruptions.",
-      type: "alert",
-      targetAudience: "all",
-      priority: "high",
-      createdAt: "3 days ago",
-      active: true
+  const { alerts } = useData();
+  const { user } = useAuth();
+  // Track dismissed IDs by UUID string (not numeric parsing)
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+
+  // Map single-role to alerts table audience values
+  const roleToAudience: Record<string, string> = {
+    "super-admin": "super-admins",
+    "zone-leader": "zone-leaders",
+    "area-leader": "area-leaders",
+    "cell-leader": "cell-leaders",
+  };
+
+  // Filter alerts based on active status, optional per-user recipients, and audience targeting
+  const relevantAlerts = alerts.filter((a: any) => {
+    if (!a?.is_active) return false;
+    if (!a?.id || dismissedIds.includes(a.id)) return false;
+
+    // If recipients specified (optional column), only show to those users
+    const recipients: string[] | undefined = (a as any).recipient_user_ids || (a as any).target_user_ids;
+    if (Array.isArray(recipients) && recipients.length > 0) {
+      if (!user?.id) return false;
+      return recipients.includes(user.id);
     }
-  ];
 
-  const [dismissedAlerts, setDismissedAlerts] = useState<number[]>([]);
-
-  // Filter alerts based on user role and target audience
-  const relevantAlerts = allAlerts.filter(alert => {
-    if (!alert.active || dismissedAlerts.includes(alert.id)) return false;
-    
-    if (alert.targetAudience === "all") return true;
-    if (alert.targetAudience === "zone-leaders" && userRole === "zone-leader") return true;
-    if (alert.targetAudience === "cell-leaders" && userRole === "cell-leader") return true;
-    
-    return false;
+    // Otherwise, match audience by role
+    if (userRole === "super-admin") {
+      // Super admins see all alerts
+      return true;
+    }
+    const audience = roleToAudience[userRole] || "";
+    return a.target_audience === "all" || a.target_audience === audience;
   });
 
-  const dismissAlert = (alertId: number) => {
-    setDismissedAlerts([...dismissedAlerts, alertId]);
+  const dismissAlert = (alertId: string) => {
+    setDismissedIds((prev) => (prev.includes(alertId) ? prev : [...prev, alertId]));
   };
 
   if (relevantAlerts.length === 0) {
@@ -78,23 +56,23 @@ const AlertNotifications = ({ userRole }: AlertNotificationsProps) => {
 
   return (
     <div className="space-y-4">
-      {relevantAlerts.map((alert) => (
+      {relevantAlerts.map((alert: any) => (
         <Alert 
           key={alert.id} 
-          variant={alert.type === "alert" ? "destructive" : "default"}
+          variant={alert.type === "error" ? "destructive" : "default"}
           className="relative"
         >
           <div className="flex items-start space-x-3">
             {alert.type === "info" && <MessageSquare className="h-4 w-4 mt-0.5" />}
             {alert.type === "warning" && <AlertCircle className="h-4 w-4 mt-0.5 text-orange-500" />}
-            {alert.type === "alert" && <AlertCircle className="h-4 w-4 mt-0.5" />}
+            {alert.type === "error" && <AlertCircle className="h-4 w-4 mt-0.5" />}
             
             <div className="flex-1 space-y-2">
               <div className="flex items-center justify-between">
                 <AlertTitle className="flex items-center space-x-2">
                   <span>{alert.title}</span>
                   <Badge 
-                    variant={alert.priority === "high" ? "destructive" : "secondary"}
+                    variant={alert.priority === "high" ? "destructive" : alert.priority === "normal" ? "default" : "secondary"}
                     className="text-xs"
                   >
                     {alert.priority}
@@ -113,7 +91,7 @@ const AlertNotifications = ({ userRole }: AlertNotificationsProps) => {
                 {alert.message}
               </AlertDescription>
               <p className="text-xs text-muted-foreground">
-                {alert.createdAt}
+                {new Date(alert.created_at).toLocaleDateString()} at {new Date(alert.created_at).toLocaleTimeString()}
               </p>
             </div>
           </div>

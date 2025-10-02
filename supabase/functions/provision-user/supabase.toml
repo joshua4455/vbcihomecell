@@ -1,0 +1,4 @@
+[functions.provision-user]
+verify_jwt = true
+
+# Optional headers note: CORS response headers are set in index.ts; no special config needed here.

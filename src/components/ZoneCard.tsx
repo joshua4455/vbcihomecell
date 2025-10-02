@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-interface Zone {
+interface Area {
   id: number;
   name: string;
   leader: string;
@@ -13,13 +13,13 @@ interface Zone {
   attendance: number;
 }
 
-interface ZoneCardProps {
-  zone: Zone;
+interface AreaCardProps {
+  area: Area;
   onClick: () => void;
   isSelected: boolean;
 }
 
-export const ZoneCard = ({ zone, onClick, isSelected }: ZoneCardProps) => {
+export const AreaCard = ({ area, onClick, isSelected }: AreaCardProps) => {
   const getAttendanceColor = (percentage: number) => {
     if (percentage >= 90) return "text-success";
     if (percentage >= 80) return "text-warning";
@@ -38,16 +38,16 @@ export const ZoneCard = ({ zone, onClick, isSelected }: ZoneCardProps) => {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-primary flex items-center">
             <MapPin className="mr-2 h-5 w-5" />
-            {zone.name}
+            {area.name}
           </CardTitle>
           <Badge 
             variant="outline" 
-            className={cn("font-medium", getAttendanceColor(zone.attendance))}
+            className={cn("font-medium", getAttendanceColor(area.attendance))}
           >
-            {zone.attendance}%
+            {area.attendance}%
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground">{zone.leader}</p>
+        <p className="text-sm text-muted-foreground">{area.leader}</p>
       </CardHeader>
       
       <CardContent className="pt-0">
@@ -56,14 +56,14 @@ export const ZoneCard = ({ zone, onClick, isSelected }: ZoneCardProps) => {
             <div className="flex items-center justify-center mb-1">
               <Users className="h-4 w-4 text-primary mr-1" />
             </div>
-            <p className="text-2xl font-bold text-foreground">{zone.members}</p>
+            <p className="text-2xl font-bold text-foreground">{area.members}</p>
             <p className="text-xs text-muted-foreground">Members</p>
           </div>
           <div className="text-center p-3 bg-muted/30 rounded-lg">
             <div className="flex items-center justify-center mb-1">
               <MapPin className="h-4 w-4 text-primary mr-1" />
             </div>
-            <p className="text-2xl font-bold text-foreground">{zone.cells}</p>
+            <p className="text-2xl font-bold text-foreground">{area.cells}</p>
             <p className="text-xs text-muted-foreground">Cells</p>
           </div>
         </div>
