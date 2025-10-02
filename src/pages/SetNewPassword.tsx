@@ -28,21 +28,44 @@ const SetNewPassword = () => {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (mounted) setHasSession(!!session);
-      setInitLoading(false);
-    })();
-    // Parse error params from URL hash if present
-    try {
-      const hash = window.location.hash || '';
-      if (hash.startsWith('#')) {
-        const params = new URLSearchParams(hash.slice(1));
-        const err = params.get('error');
-        const desc = params.get('error_description');
-        if (err) setLinkError(err);
-        if (desc) setLinkErrorDesc(desc.replace(/\+/g, ' '));
+      try {
+        // Try to establish a recovery session from URL fragment if present
+        const hash = window.location.hash || '';
+        if (hash.startsWith('#')) {
+          const params = new URLSearchParams(hash.slice(1));
+          // Capture error details if present
+          const err = params.get('error');
+          const desc = params.get('error_description');
+          if (err) setLinkError(err);
+          if (desc) setLinkErrorDesc(desc.replace(/\+/g, ' '));
+
+          // If this is a recovery link, attempt to set the session explicitly
+          const type = params.get('type');
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+          if (type === 'recovery' && accessToken && refreshToken) {
+            try {
+              const { data, error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              } as any);
+              if (!error && data?.session && mounted) {
+                setHasSession(true);
+                // Clean sensitive tokens from URL after successful session set
+                window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+              }
+            } catch {
+              // Non-fatal: we'll fall back to normal session retrieval below
+            }
+          }
+        }
+      } finally {
+        // Always query for current session at the end
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) setHasSession(!!session);
+        setInitLoading(false);
       }
-    } catch {}
+    })();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setHasSession(!!session);
     });
