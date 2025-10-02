@@ -29,6 +29,22 @@ const SetNewPassword = () => {
     let mounted = true;
     (async () => {
       try {
+        // First, try new-style code exchange (Supabase may send ?code=...)
+        try {
+          const url = new URL(window.location.href);
+          const code = url.searchParams.get('code');
+          if (code) {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(url.href as any);
+            if (!error && data?.session && mounted) {
+              setHasSession(true);
+              // Clean query params after successful exchange
+              window.history.replaceState({}, document.title, url.pathname);
+            }
+          }
+        } catch {
+          // Ignore; we will fall back to hash token handling next
+        }
+
         // Try to establish a recovery session from URL fragment if present
         const hash = window.location.hash || '';
         if (hash.startsWith('#')) {
