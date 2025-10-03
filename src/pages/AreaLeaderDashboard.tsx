@@ -357,18 +357,22 @@ const AreaLeaderDashboard = () => {
       return { key, label, start: date, end };
     };
 
-    const weeklyData: Record<string, { week: string; meetings: number; attendees: number; offerings: number; cells: Set<string>; newMembers: number }> = {};
+    const weeklyData: Record<string, { week: string; meetings: number; attendees: number; offerings: number; cells: Set<string>; newMembers: number; visitors: number; converts: number; followups: number; visits: number }> = {};
 
     // Aggregate meetings by week
     for (const meeting of areaMeetings as any[]) {
       const info = getWeekInfo(new Date((meeting as any).date));
       if (!weeklyData[info.key]) {
-        weeklyData[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, cells: new Set<string>(), newMembers: 0 };
+        weeklyData[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, cells: new Set<string>(), newMembers: 0, visitors: 0, converts: 0, followups: 0, visits: 0 };
       }
       weeklyData[info.key].meetings += 1;
       weeklyData[info.key].attendees += ((meeting as any).attendance_count || 0);
       weeklyData[info.key].offerings += ((meeting as any).offering_amount || 0);
       weeklyData[info.key].cells.add(String((meeting as any).cell_id));
+      weeklyData[info.key].visitors += ((meeting as any).visitors_count || 0);
+      weeklyData[info.key].converts += ((meeting as any).converts_count || 0);
+      weeklyData[info.key].followups += ((meeting as any).followups_count || 0);
+      weeklyData[info.key].visits += ((meeting as any).visits_count || 0);
     }
 
     // Count new members per week for cells in this area (based on members.date_joined)
@@ -378,7 +382,7 @@ const AreaLeaderDashboard = () => {
       if (!joined || !areaCellIds.has((m as any).cell_id)) continue;
       const info = getWeekInfo(new Date(joined));
       if (!weeklyData[info.key]) {
-        weeklyData[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, cells: new Set<string>(), newMembers: 0 };
+        weeklyData[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, cells: new Set<string>(), newMembers: 0, visitors: 0, converts: 0, followups: 0, visits: 0 };
       }
       weeklyData[info.key].newMembers += 1;
     }
@@ -397,6 +401,10 @@ const AreaLeaderDashboard = () => {
           offerings: entry.offerings,
           activeCells: entry.cells.size,
           newMembers: entry.newMembers || 0,
+          visitors: entry.visitors || 0,
+          converts: entry.converts || 0,
+          followups: entry.followups || 0,
+          visits: entry.visits || 0,
         };
       }),
       summary: {
@@ -404,7 +412,11 @@ const AreaLeaderDashboard = () => {
         activeCells: areaCells.filter(c => c.status === 'active').length,
         totalMembers,
         totalMeetings: areaMeetings.length,
-        averageAttendance: Math.round(areaMeetings.reduce((sum, m) => sum + (m.attendance_count || 0), 0) / (areaMeetings.length || 1))
+        averageAttendance: Math.round(areaMeetings.reduce((sum, m) => sum + (m.attendance_count || 0), 0) / (areaMeetings.length || 1)),
+        totalVisitors: Object.values(weeklyData).reduce((s, e) => s + (e.visitors || 0), 0),
+        totalConverts: Object.values(weeklyData).reduce((s, e) => s + (e.converts || 0), 0),
+        totalFollowups: Object.values(weeklyData).reduce((s, e) => s + (e.followups || 0), 0),
+        totalVisits: Object.values(weeklyData).reduce((s, e) => s + (e.visits || 0), 0),
       }
     };
 
@@ -487,8 +499,8 @@ const AreaLeaderDashboard = () => {
       const rows = data.data.map((row: any) => [row.date, row.cellName, row.attendees, row.totalMembers, row.percentage + '%']);
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     } else if (data.type === 'growth') {
-      const headers = ['Week', 'Meetings', 'Attendees', 'Offerings (GHS)', 'Active Cells', 'New Members'];
-      const rows = (data.data as any[]).map((row) => [row.week, row.meetings, row.attendees, `₵${row.offerings}`, row.activeCells, row.newMembers || 0]);
+      const headers = ['Week', 'Meetings', 'Attendees', 'Offerings (GHS)', 'Active Cells', 'New Members', 'Visitors', 'Converts', 'Follow-ups', 'Visits'];
+      const rows = (data.data as any[]).map((row) => [row.week, row.meetings, row.attendees, `₵${row.offerings}`, row.activeCells, row.newMembers || 0, row.visitors || 0, row.converts || 0, row.followups || 0, row.visits || 0]);
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     } else if (data.type === 'offering') {
       const headers = ['Date', 'Cell Name', 'Offering (GHS)', 'Attendees', 'Per Person (GHS)'];

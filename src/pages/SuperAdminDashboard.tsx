@@ -559,7 +559,10 @@ const SuperAdminDashboard = () => {
 
     const totalAttendance = periodMeetings.reduce((sum, m) => sum + (m.attendance_count || 0), 0);
     const totalOfferings = periodMeetings.reduce((sum, m) => sum + (m.offering_amount || 0), 0);
-    const totalVisitors = 0;
+    const totalVisitors = periodMeetings.reduce((sum, m: any) => sum + ((m as any).visitors_count || 0), 0);
+    const totalConverts = periodMeetings.reduce((sum, m: any) => sum + ((m as any).converts_count || 0), 0);
+    const totalFollowups = periodMeetings.reduce((sum, m: any) => sum + ((m as any).followups_count || 0), 0);
+    const totalVisits = periodMeetings.reduce((sum, m: any) => sum + ((m as any).visits_count || 0), 0);
     
     return {
       type,
@@ -570,6 +573,9 @@ const SuperAdminDashboard = () => {
         totalAttendance,
         totalOfferings,
         totalVisitors,
+        totalConverts,
+        totalFollowups,
+        totalVisits,
         averageAttendance: periodMeetings.length > 0 ? Math.round(totalAttendance / periodMeetings.length) : 0,
         areas: areaStats.map((area: any) => ({
           name: area.name,
@@ -612,12 +618,19 @@ const SuperAdminDashboard = () => {
       rows.push(['Total Attendance', String(s.totalAttendance ?? 0)]);
       rows.push(['Average Attendance', `${s.averageAttendance ?? 0}%`]);
       rows.push(['Total Offerings', `₵${(s.totalOfferings ?? 0).toLocaleString()}`]);
+      rows.push(['Total Visitors', String(s.totalVisitors ?? 0)]);
+      rows.push(['Total Converts', String(s.totalConverts ?? 0)]);
+      rows.push(['Total Follow-ups', String(s.totalFollowups ?? 0)]);
+      rows.push(['Total Visits', String(s.totalVisits ?? 0)]);
     } else if (data.data) {
       // Back-compat
       rows.push(['Total Meetings', String(data.data.totalMeetings)]);
       rows.push(['Total Attendance', String(data.data.totalAttendance)]);
       rows.push(['Total Offerings', `₵${data.data.totalOfferings.toLocaleString()}`]);
       rows.push(['Total Visitors', String(data.data.totalVisitors)]);
+      rows.push(['Total Converts', String(data.data.totalConverts ?? 0)]);
+      rows.push(['Total Follow-ups', String(data.data.totalFollowups ?? 0)]);
+      rows.push(['Total Visits', String(data.data.totalVisits ?? 0)]);
       rows.push(['Average Attendance', `${data.data.averageAttendance}%`]);
     }
     rows.push([]);

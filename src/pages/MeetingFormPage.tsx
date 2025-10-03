@@ -65,7 +65,7 @@ const MeetingFormPage = () => {
     setNewVisitors(newVisitors.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!currentCell) {
@@ -86,33 +86,56 @@ const MeetingFormPage = () => {
       return;
     }
 
-    // Create meeting object
-    const meetingData: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'> = {
-      cellId: currentCell.id,
-      areaId: currentCell.area_id,
-      date: new Date(formData.date),
-      timeOpened: formData.timeOpened,
-      timeClosed: formData.timeClosed,
-      attendees,
-      offering: parseFloat(formData.offering),
-      newVisitors: newVisitors.filter(v => v.name).map(v => ({
-        ...v,
-        id: `visitor-${Date.now()}-${Math.random()}`,
-      })),
-      visitsCount: parseInt(formData.visitsCount) || 0,
-      visitNotes: formData.visitNotes,
-      status: 'submitted'
+    // Compute visitor metrics
+    const namedVisitors = newVisitors.filter(v => (v.name || '').trim().length > 0);
+    const visitorsCount = namedVisitors.length;
+    const convertsCount = namedVisitors.filter(v => v.isConvert).length;
+    const followupsCount = namedVisitors.filter(v => v.followUpRequired).length;
+
+    // Supabase schema payload (snake_case)
+    const meetingData: any = {
+      cell_id: currentCell.id,
+      date: new Date(formData.date).toISOString(),
+      attendance_count: attendees.length,
+      offering_amount: parseFloat(formData.offering),
+      notes: formData.visitNotes || undefined,
+      visits_count: parseInt(formData.visitsCount) || 0,
+      visitors_count: visitorsCount,
+      converts_count: convertsCount,
+      followups_count: followupsCount,
     };
 
-    // Add meeting to data context
-    addMeeting(meetingData);
-
-    toast({
-      title: "Meeting Record Saved",
-      description: `Successfully recorded meeting with ${attendees.length} attendees and ${newVisitors.filter(v => v.name).length} new visitors.`,
-    });
-    
-    navigate("/dashboard");
+    try {
+      await addMeeting(meetingData as any);
+      toast({
+        title: "Meeting Record Saved",
+        description: `Successfully recorded meeting with ${attendees.length} attendees and ${visitorsCount} new visitors.`,
+      });
+      navigate("/dashboard");
+    } catch (err: any) {
+      // Fallback without extended columns if DB migration pending
+      const basePayload: any = {
+        cell_id: currentCell.id,
+        date: new Date(formData.date).toISOString(),
+        attendance_count: attendees.length,
+        offering_amount: parseFloat(formData.offering),
+        notes: formData.visitNotes || undefined,
+      };
+      try {
+        await addMeeting(basePayload);
+        toast({
+          title: "Meeting Record Saved",
+          description: `Saved without new metrics (DB migration pending).`,
+        });
+        navigate("/dashboard");
+      } catch (err2: any) {
+        toast({
+          title: "Submission Failed",
+          description: (err2?.message || err?.message || 'Unable to submit meeting. Please try again.'),
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const handleSaveDraft = () => {

@@ -82,6 +82,10 @@ const ZoneLeaderDashboard = () => {
   const totalMembers = members.filter((m: any) => zoneCells.some((c) => c.id === m.cell_id)).length;
   const totalMeetings = zoneMeetings.length;
   const totalOfferings = zoneMeetings.reduce((sum: number, meeting: any) => sum + (meeting.offering_amount || 0), 0);
+  const totalVisitors = zoneMeetings.reduce((sum: number, m: any) => sum + ((m as any).visitors_count || 0), 0);
+  const totalConverts = zoneMeetings.reduce((sum: number, m: any) => sum + ((m as any).converts_count || 0), 0);
+  const totalFollowups = zoneMeetings.reduce((sum: number, m: any) => sum + ((m as any).followups_count || 0), 0);
+  const totalVisits = zoneMeetings.reduce((sum: number, m: any) => sum + ((m as any).visits_count || 0), 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -423,22 +427,26 @@ const ZoneLeaderDashboard = () => {
       return { key, label };
     };
 
-    const weekly: Record<string, { week: string; meetings: number; attendees: number; offerings: number; activeCells: number; newMembers: number }> = {};
+    const weekly: Record<string, { week: string; meetings: number; attendees: number; offerings: number; activeCells: number; newMembers: number; visitors: number; converts: number; followups: number; visits: number }> = {};
 
     // Aggregate meetings for the entire zone by week
     for (const m of zoneMeetings as any[]) {
       const info = getWeekInfo(new Date((m as any).date));
-      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, activeCells: 0, newMembers: 0 };
+      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, activeCells: 0, newMembers: 0, visitors: 0, converts: 0, followups: 0, visits: 0 };
       weekly[info.key].meetings += 1;
       weekly[info.key].attendees += ((m as any).attendance_count || 0);
       weekly[info.key].offerings += ((m as any).offering_amount || 0);
+      weekly[info.key].visitors += ((m as any).visitors_count || 0);
+      weekly[info.key].converts += ((m as any).converts_count || 0);
+      weekly[info.key].followups += ((m as any).followups_count || 0);
+      weekly[info.key].visits += ((m as any).visits_count || 0);
     }
 
     // Count unique cells per week as activeCells and new members per week for zone
     const zoneCellIds = new Set(zoneCells.map((c: any) => c.id));
     for (const m of zoneMeetings as any[]) {
       const info = getWeekInfo(new Date((m as any).date));
-      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, activeCells: 0, newMembers: 0 };
+      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, activeCells: 0, newMembers: 0, visitors: 0, converts: 0, followups: 0, visits: 0 };
       // We'll compute activeCells later by scanning meetings set
     }
     // Derive activeCells by week via cell_id set
@@ -459,7 +467,7 @@ const ZoneLeaderDashboard = () => {
       const joined = (mem as any).date_joined;
       if (!joined) continue;
       const info = getWeekInfo(new Date(joined));
-      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, activeCells: 0, newMembers: 0 };
+      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, activeCells: 0, newMembers: 0, visitors: 0, converts: 0, followups: 0, visits: 0 };
       weekly[info.key].newMembers += 1;
     }
 
@@ -474,6 +482,10 @@ const ZoneLeaderDashboard = () => {
         totalMembers,
         totalMeetings,
         totalGrowth: Object.values(weekly).reduce((s, w) => s + (w.newMembers || 0), 0),
+        totalVisitors,
+        totalConverts,
+        totalFollowups,
+        totalVisits,
         averageAttendance: zoneMeetings.length > 0 ? Math.round(zoneMeetings.reduce((sum: number, m: any) => sum + (m.attendance_count || 0), 0) / zoneMeetings.length) : 0,
       },
       data: Object.keys(weekly).sort().map((k) => weekly[k])
@@ -555,8 +567,8 @@ const ZoneLeaderDashboard = () => {
     if (!reportData) return;
     let csvContent = '';
     if (reportData.type === 'growth') {
-      const headers = ['Week', 'Meetings', 'Attendees', 'Offerings', 'Active Cells', 'New Members'];
-      const rows = reportData.data.map((row: any) => [row.week, row.meetings, row.attendees, row.offerings, row.activeCells, row.newMembers || 0]);
+      const headers = ['Week', 'Meetings', 'Attendees', 'Offerings', 'Active Cells', 'New Members', 'Visitors', 'Converts', 'Follow-ups', 'Visits'];
+      const rows = reportData.data.map((row: any) => [row.week, row.meetings, row.attendees, row.offerings, row.activeCells, row.newMembers || 0, row.visitors || 0, row.converts || 0, row.followups || 0, row.visits || 0]);
       csvContent = [headers, ...rows].map((r: any[]) => r.join(',')).join('\n');
     } else {
       const headers = ['Area Name', 'Leader', 'Cells', 'Members', 'Meetings', 'Total Offerings', 'Avg Attendance'];
