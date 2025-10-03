@@ -2275,6 +2275,24 @@ const SuperAdminDashboard = () => {
                       <p className="text-sm text-muted-foreground">Avg Attendance</p>
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <p className="text-2xl font-bold text-primary">{reportData.summary?.totalVisitors ?? 0}</p>
+                      <p className="text-sm text-muted-foreground">Total Visitors</p>
+                    </div>
+                    <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <p className="text-2xl font-bold text-green-700">{reportData.summary?.totalConverts ?? 0}</p>
+                      <p className="text-sm text-muted-foreground">New Converts</p>
+                    </div>
+                    <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <p className="text-2xl font-bold text-orange-600">{reportData.summary?.totalFollowups ?? 0}</p>
+                      <p className="text-sm text-muted-foreground">Follow-ups</p>
+                    </div>
+                    <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <p className="text-2xl font-bold text-slate-700">{reportData.summary?.totalVisits ?? 0}</p>
+                      <p className="text-sm text-muted-foreground">Visits Made</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 

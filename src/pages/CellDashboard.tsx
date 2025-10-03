@@ -101,15 +101,19 @@ const CellDashboard = () => {
       return { key, label };
     };
 
-    const weekly: Record<string, { week: string; meetings: number; attendees: number; offerings: number; newMembers: number }> = {};
+    const weekly: Record<string, { week: string; meetings: number; attendees: number; offerings: number; newMembers: number; visitors: number; converts: number; followups: number; visits: number }> = {};
 
     // Aggregate meetings by week
     for (const meeting of cellMeetings as any[]) {
       const info = getWeekInfo(new Date((meeting as any).date));
-      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, newMembers: 0 };
+      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, newMembers: 0, visitors: 0, converts: 0, followups: 0, visits: 0 };
       weekly[info.key].meetings += 1;
       weekly[info.key].attendees += ((meeting as any).attendance_count || 0);
       weekly[info.key].offerings += ((meeting as any).offering_amount || 0);
+      weekly[info.key].visitors += ((meeting as any).visitors_count || 0);
+      weekly[info.key].converts += ((meeting as any).converts_count || 0);
+      weekly[info.key].followups += ((meeting as any).followups_count || 0);
+      weekly[info.key].visits += ((meeting as any).visits_count || 0);
     }
 
     // Count new members per week for this cell
@@ -118,7 +122,7 @@ const CellDashboard = () => {
       const joined = (m as any).date_joined;
       if (!joined) continue;
       const info = getWeekInfo(new Date(joined));
-      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, newMembers: 0 };
+      if (!weekly[info.key]) weekly[info.key] = { week: info.label, meetings: 0, attendees: 0, offerings: 0, newMembers: 0, visitors: 0, converts: 0, followups: 0, visits: 0 };
       weekly[info.key].newMembers += 1;
     }
 
@@ -131,7 +135,11 @@ const CellDashboard = () => {
       summary: {
         totalGrowth: Object.values(weekly).reduce((sum, w) => sum + (w.newMembers || 0), 0),
         averageAttendance: totalMeetings > 0 ? Math.round(cellMeetings.reduce((s, m: any) => s + (m.attendance_count || 0), 0) / totalMeetings) : 0,
-        totalMembers
+        totalMembers,
+        totalVisitors: Object.values(weekly).reduce((s, w) => s + (w.visitors || 0), 0),
+        totalConverts: Object.values(weekly).reduce((s, w) => s + (w.converts || 0), 0),
+        totalFollowups: Object.values(weekly).reduce((s, w) => s + (w.followups || 0), 0),
+        totalVisits: Object.values(weekly).reduce((s, w) => s + (w.visits || 0), 0),
       }
     };
 
@@ -224,8 +232,8 @@ const CellDashboard = () => {
       const rows = data.data.map((row: any) => [row.date, row.attendees, row.totalMembers, row.percentage + '%']);
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     } else if (data.type === 'growth') {
-      const headers = ['Week', 'Meetings', 'Attendees', 'Offerings', 'New Members'];
-      const rows = data.data.map((row: any) => [row.week, row.meetings, row.attendees, row.offerings, row.newMembers || 0]);
+      const headers = ['Week', 'Meetings', 'Attendees', 'Offerings', 'New Members', 'Visitors', 'Converts', 'Follow-ups', 'Visits'];
+      const rows = data.data.map((row: any) => [row.week, row.meetings, row.attendees, row.offerings, row.newMembers || 0, row.visitors || 0, row.converts || 0, row.followups || 0, row.visits || 0]);
       return [headers, ...rows].map(row => row.join(',')).join('\n');
     } else if (data.type === 'offering') {
       const headers = ['Date', 'Offering', 'Attendees', 'Per Person'];
@@ -636,6 +644,24 @@ const CellDashboard = () => {
                         <div className="text-center p-4 bg-muted/30 rounded-lg">
                           <p className="text-2xl font-bold text-purple-600">{reportData.summary.totalMembers}</p>
                           <p className="text-sm text-muted-foreground">Total Members</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-primary">{reportData.summary.totalVisitors}</p>
+                          <p className="text-sm text-muted-foreground">Total Visitors</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-green-700">{reportData.summary.totalConverts}</p>
+                          <p className="text-sm text-muted-foreground">New Converts</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-orange-600">{reportData.summary.totalFollowups}</p>
+                          <p className="text-sm text-muted-foreground">Follow-ups</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-slate-700">{reportData.summary.totalVisits}</p>
+                          <p className="text-sm text-muted-foreground">Visits Made</p>
                         </div>
                       </div>
                       <div className="space-y-3">

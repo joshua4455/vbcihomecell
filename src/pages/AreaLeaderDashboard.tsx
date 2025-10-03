@@ -1095,6 +1095,24 @@ const AreaLeaderDashboard = () => {
                             <p className="text-sm text-muted-foreground">Active Cells</p>
                           </div>
                         </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                          <div className="text-center p-4 bg-muted/30 rounded-lg">
+                            <p className="text-2xl font-bold text-primary">{reportData.summary.totalVisitors}</p>
+                            <p className="text-sm text-muted-foreground">Total Visitors</p>
+                          </div>
+                          <div className="text-center p-4 bg-muted/30 rounded-lg">
+                            <p className="text-2xl font-bold text-green-700">{reportData.summary.totalConverts}</p>
+                            <p className="text-sm text-muted-foreground">New Converts</p>
+                          </div>
+                          <div className="text-center p-4 bg-muted/30 rounded-lg">
+                            <p className="text-2xl font-bold text-orange-600">{reportData.summary.totalFollowups}</p>
+                            <p className="text-sm text-muted-foreground">Follow-ups</p>
+                          </div>
+                          <div className="text-center p-4 bg-muted/30 rounded-lg">
+                            <p className="text-2xl font-bold text-slate-700">{reportData.summary.totalVisits}</p>
+                            <p className="text-sm text-muted-foreground">Visits Made</p>
+                          </div>
+                        </div>
                         <div className="space-y-3">
                           <h3 className="text-lg font-semibold mb-3">Growth Details</h3>
                           {reportData.data.map((row: any, index: number) => (
