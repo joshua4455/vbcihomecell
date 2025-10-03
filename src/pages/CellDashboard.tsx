@@ -81,7 +81,11 @@ const CellDashboard = () => {
         averageAttendance,
         totalMembers,
         bestAttendance: Math.max(...attendanceData.map(d => d.attendees)),
-        worstAttendance: Math.min(...attendanceData.map(d => d.attendees))
+        worstAttendance: Math.min(...attendanceData.map(d => d.attendees)),
+        totalVisitors: cellMeetings.reduce((s: number, m: any) => s + ((m as any).visitors_count || 0), 0),
+        totalConverts: cellMeetings.reduce((s: number, m: any) => s + ((m as any).converts_count || 0), 0),
+        totalFollowups: cellMeetings.reduce((s: number, m: any) => s + ((m as any).followups_count || 0), 0),
+        totalVisits: cellMeetings.reduce((s: number, m: any) => s + ((m as any).visits_count || 0), 0),
       }
     };
 
@@ -608,6 +612,24 @@ const CellDashboard = () => {
                           <p className="text-sm text-muted-foreground">Lowest Attendance</p>
                         </div>
                       </div>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-primary">{reportData.summary.totalVisitors || 0}</p>
+                          <p className="text-sm text-muted-foreground">Total Visitors</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-green-700">{reportData.summary.totalConverts || 0}</p>
+                          <p className="text-sm text-muted-foreground">New Converts</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-orange-600">{reportData.summary.totalFollowups || 0}</p>
+                          <p className="text-sm text-muted-foreground">Follow-ups</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-slate-700">{reportData.summary.totalVisits || 0}</p>
+                          <p className="text-sm text-muted-foreground">Visits Made</p>
+                        </div>
+                      </div>
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold">Meeting Details</h3>
                         {reportData.data.map((meeting: any, index: number) => (
@@ -678,6 +700,9 @@ const CellDashboard = () => {
                               <p className="font-bold text-primary">{row.attendees} attendees</p>
                               <p className="text-sm text-muted-foreground">
                                 ₵{(row.offerings || 0).toLocaleString()} • {row.newMembers || 0} new members
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {row.visitors || 0} visitors • {row.converts || 0} converts • {row.followups || 0} follow-ups • {row.visits || 0} visits
                               </p>
                             </div>
                           </div>

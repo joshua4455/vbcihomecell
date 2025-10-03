@@ -36,7 +36,7 @@ import {
 
 const AreaLeaderDashboard = () => {
   const { user, logout } = useAuth();
-  const { areas, cells, meetings, users, members, addCell, updateCell, deleteCell, addUser, updateUser, updateArea, deleteArea, isLoading } = useData();
+  const { areas, cells, meetings, users, members, addCell, updateCell, deleteCell, addUser, updateUser, updateArea, deleteArea, isLoading, refreshData } = useData();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -310,7 +310,8 @@ const AreaLeaderDashboard = () => {
   };
 
   // Report generation functions
-  const generateAttendanceReport = () => {
+  const generateAttendanceReport = async () => {
+  await refreshData();
     const attendanceData = areaMeetings.map((meeting: any) => {
       const cell = areaCells.find(c => c.id === meeting.cell_id);
       const totalMembersForCell = (members as any[]).filter((m: any) => (m as any).cell_id === cell?.id).length;
@@ -331,11 +332,15 @@ const AreaLeaderDashboard = () => {
       period: 'All Time',
       data: attendanceData,
       summary: {
-        totalMeetings: totalMeetings,
-        averageAttendance: averageAttendance,
+        totalMeetings: areaMeetings.length,
+        averageAttendance: areaMeetings.length > 0 ? Math.round(areaMeetings.reduce((sum: number, m: any) => sum + (m.attendance_count || 0), 0) / areaMeetings.length) : 0,
         totalMembers: totalMembers,
         bestAttendance: Math.max(...attendanceData.map(d => d.attendees), 0),
-        worstAttendance: Math.min(...attendanceData.map(d => d.attendees), 0)
+        worstAttendance: Math.min(...attendanceData.map(d => d.attendees), 0),
+        totalVisitors: areaMeetings.reduce((s: number, m: any) => s + ((m as any).visitors_count || 0), 0),
+        totalConverts: areaMeetings.reduce((s: number, m: any) => s + ((m as any).converts_count || 0), 0),
+        totalFollowups: areaMeetings.reduce((s: number, m: any) => s + ((m as any).followups_count || 0), 0),
+        totalVisits: areaMeetings.reduce((s: number, m: any) => s + ((m as any).visits_count || 0), 0),
       }
     };
 
@@ -343,7 +348,8 @@ const AreaLeaderDashboard = () => {
     setSelectedReport('attendance');
   };
 
-  const generateGrowthReport = () => {
+  const generateGrowthReport = async () => {
+  await refreshData();
     // Helper: get Monday-start week label and key
     const getWeekInfo = (d: Date) => {
       const date = new Date(d);
@@ -424,7 +430,8 @@ const AreaLeaderDashboard = () => {
     setSelectedReport('growth');
   };
 
-  const generateOfferingReport = () => {
+  const generateOfferingReport = async () => {
+  await refreshData();
     const offeringData = areaMeetings.map((meeting: any) => {
       const cell = areaCells.find(c => c.id === meeting.cell_id);
       return {
@@ -455,7 +462,8 @@ const AreaLeaderDashboard = () => {
     setSelectedReport('offering');
   };
 
-  const generateCellPerformanceReport = () => {
+  const generateCellPerformanceReport = async () => {
+  await refreshData();
     const cellData = areaCells.map((cell: any) => {
       const cellMeetings = areaMeetings.filter((m: any) => m.cell_id === cell.id);
       const cellOfferings = cellMeetings.reduce((sum: number, m: any) => sum + (m.offering_amount || 0), 0);
@@ -527,27 +535,9 @@ const AreaLeaderDashboard = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-20">
-            <h1 className="text-2xl font-bold text-foreground mb-2">Loading your area...</h1>
-            <p className="text-muted-foreground mb-4">
-              Please wait while we load your assignment.
-            </p>
-            <Button onClick={() => navigate("/")}> 
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Do not block the page on initial load; show a subtle inline banner instead
 
-  if (!currentArea) {
+  if (!currentArea && !isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -698,6 +688,7 @@ const AreaLeaderDashboard = () => {
                               {memberCount} members • {cellMeetings.length} meetings
                             </p>
                           </div>
+                        {/* Removed reportData KPIs from Overview cell list to avoid null reference; KPIs are shown in Reports tab */}
                           <div className="text-right">
                             <p className="font-bold">₵{cellOfferings.toLocaleString()}</p>
                             <Badge variant={cell.status === 'active' ? 'default' : 'secondary'}>
@@ -1035,7 +1026,7 @@ const AreaLeaderDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {reportData.type === 'attendance' && (
+                    {reportData && reportData.type === 'attendance' && (
                       <div>
                         <h3 className="text-lg font-semibold mb-3">Attendance Summary</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1056,6 +1047,24 @@ const AreaLeaderDashboard = () => {
                             <p className="text-sm text-muted-foreground">Best Attendance</p>
                           </div>
                         </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                          <div className="text-center p-4 bg-muted/30 rounded-lg">
+                            <p className="text-2xl font-bold text-primary">{reportData.summary.totalVisitors || 0}</p>
+                            <p className="text-sm text-muted-foreground">Total Visitors</p>
+                          </div>
+                          <div className="text-center p-4 bg-muted/30 rounded-lg">
+                            <p className="text-2xl font-bold text-green-700">{reportData.summary.totalConverts || 0}</p>
+                            <p className="text-sm text-muted-foreground">New Converts</p>
+                          </div>
+                          <div className="text-center p-4 bg-muted/30 rounded-lg">
+                            <p className="text-2xl font-bold text-orange-600">{reportData.summary.totalFollowups || 0}</p>
+                            <p className="text-sm text-muted-foreground">Follow-ups</p>
+                          </div>
+                          <div className="text-center p-4 bg-muted/30 rounded-lg">
+                            <p className="text-2xl font-bold text-slate-700">{reportData.summary.totalVisits || 0}</p>
+                            <p className="text-sm text-muted-foreground">Visits Made</p>
+                          </div>
+                        </div>
                         <div className="space-y-3">
                           <h3 className="text-lg font-semibold mb-3">Attendance Details</h3>
                           {reportData.data.map((row: any, index: number) => (
@@ -1074,7 +1083,7 @@ const AreaLeaderDashboard = () => {
                         </div>
                       </div>
                     )}
-                    {reportData.type === 'growth' && (
+                    {reportData && reportData.type === 'growth' && (
                       <div>
                         <h3 className="text-lg font-semibold mb-3">Growth Summary</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1132,7 +1141,7 @@ const AreaLeaderDashboard = () => {
                         </div>
                       </div>
                     )}
-                    {reportData.type === 'offering' && (
+                    {reportData && reportData.type === 'offering' && (
                       <div>
                         <h3 className="text-lg font-semibold mb-3">Offering Summary</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1171,7 +1180,7 @@ const AreaLeaderDashboard = () => {
                         </div>
                       </div>
                     )}
-                    {reportData.type === 'cellPerformance' && (
+                    {reportData && reportData.type === 'cellPerformance' && (
                       <div>
                         <h3 className="text-lg font-semibold mb-3">Cell Performance Summary</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

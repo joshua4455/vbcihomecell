@@ -381,7 +381,12 @@ const ZoneLeaderDashboard = () => {
     }
   };
 
-  const generateAttendanceReport = () => {
+  const generateAttendanceReport = async () => {
+    await refreshData?.();
+    const totalVisitors = zoneMeetings.reduce((s: number, m: any) => s + ((m as any).visitors_count || 0), 0);
+    const totalConverts = zoneMeetings.reduce((s: number, m: any) => s + ((m as any).converts_count || 0), 0);
+    const totalFollowups = zoneMeetings.reduce((s: number, m: any) => s + ((m as any).followups_count || 0), 0);
+    const totalVisits = zoneMeetings.reduce((s: number, m: any) => s + ((m as any).visits_count || 0), 0);
     const reportData = {
       type: 'attendance',
       title: 'Zone Attendance Report',
@@ -393,7 +398,11 @@ const ZoneLeaderDashboard = () => {
         totalMembers,
         totalMeetings,
         averageAttendance: zoneMeetings.length > 0 ? 
-          Math.round(zoneMeetings.reduce((sum: number, m: any) => sum + (m.attendance_count || 0), 0) / zoneMeetings.length) : 0
+          Math.round(zoneMeetings.reduce((sum: number, m: any) => sum + (m.attendance_count || 0), 0) / zoneMeetings.length) : 0,
+        totalVisitors,
+        totalConverts,
+        totalFollowups,
+        totalVisits,
       },
       data: zoneAreas.map((area: any) => {
         const areaCells = zoneCells.filter((c: any) => c.area_id === area.id);
@@ -1011,6 +1020,63 @@ const ZoneLeaderDashboard = () => {
                             <div className="text-right">
                               <p className="font-bold">₵{(row.offerings || 0).toLocaleString()}</p>
                               <p className="text-sm text-muted-foreground">{row.activeCells} active cells • {row.newMembers || 0} new members</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : reportData?.type === 'attendance' ? (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-primary">{reportData?.summary.totalAreas}</p>
+                          <p className="text-sm text-muted-foreground">Total Areas</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-blue-600">{reportData?.summary.totalCells}</p>
+                          <p className="text-sm text-muted-foreground">Total Cells</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-green-600">{reportData?.summary.totalMembers}</p>
+                          <p className="text-sm text-muted-foreground">Total Members</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-purple-600">{reportData?.summary.totalMeetings}</p>
+                          <p className="text-sm text-muted-foreground">Total Meetings</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-orange-600">{reportData?.summary.averageAttendance}</p>
+                          <p className="text-sm text-muted-foreground">Avg Attendance</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-primary">{reportData?.summary.totalVisitors || 0}</p>
+                          <p className="text-sm text-muted-foreground">Total Visitors</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-green-700">{reportData?.summary.totalConverts || 0}</p>
+                          <p className="text-sm text-muted-foreground">New Converts</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-orange-600">{reportData?.summary.totalFollowups || 0}</p>
+                          <p className="text-sm text-muted-foreground">Follow-ups</p>
+                        </div>
+                        <div className="text-center p-4 bg-muted/30 rounded-lg">
+                          <p className="text-2xl font-bold text-slate-700">{reportData?.summary.totalVisits || 0}</p>
+                          <p className="text-sm text-muted-foreground">Visits Made</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold">Area Attendance Details</h3>
+                        {reportData?.data.map((area: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
+                            <div>
+                              <p className="font-medium">{area.name}</p>
+                              <p className="text-sm text-muted-foreground">{area.cells} cells • {area.members} members • {area.meetings} meetings</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-green-600">{area.averageAttendance}%</p>
                             </div>
                           </div>
                         ))}
