@@ -282,12 +282,16 @@ const SuperAdminDashboard = () => {
 
   // Super Admin Report Generators
   const generateSystemAttendanceReport = () => {
-    const totalZones = zones.length;
-    const totalAreas = areas.length;
-    const totalCells = cells.length;
-    const totalMeetings = meetings.length;
-    const totalAttendance = meetings.reduce((s, m) => s + (m.attendance_count || 0), 0);
-    const averageAttendance = totalMeetings > 0 ? Math.round(totalAttendance / totalMeetings) : 0;
+  const totalZones = zones.length;
+  const totalAreas = areas.length;
+  const totalCells = cells.length;
+  const totalMeetings = meetings.length;
+  const totalAttendance = meetings.reduce((s, m) => s + (m.attendance_count || 0), 0);
+  const totalVisitors = meetings.reduce((s, m: any) => s + ((m as any).visitors_count || 0), 0);
+  const totalConverts = meetings.reduce((s, m: any) => s + ((m as any).converts_count || 0), 0);
+  const totalFollowups = meetings.reduce((s, m: any) => s + ((m as any).followups_count || 0), 0);
+  const totalVisits = meetings.reduce((s, m: any) => s + ((m as any).visits_count || 0), 0);
+  const averageAttendance = totalMeetings > 0 ? Math.round(totalAttendance / totalMeetings) : 0;
     const areaData = areas.map((area) => {
       const aCells = cells.filter(c => c.area_id === area.id);
       const cellIds = aCells.map(c => c.id);
@@ -303,20 +307,24 @@ const SuperAdminDashboard = () => {
       };
     });
     setReportData({
-      title: 'System Attendance Report',
-      period: `Generated on ${new Date().toLocaleDateString()}`,
-      summary: { totalZones, totalAreas, totalCells, totalMembers: members.length, totalMeetings, totalAttendance, averageAttendance },
-      areas: areaData,
-    });
-    setShowReportModal(true);
-  };
+    title: 'System Attendance Report',
+    period: `Generated on ${new Date().toLocaleDateString()}`,
+    summary: { totalZones, totalAreas, totalCells, totalMembers: members.length, totalMeetings, totalAttendance, averageAttendance, totalVisitors, totalConverts, totalFollowups, totalVisits },
+    areas: areaData,
+  });
+  setShowReportModal(true);
+};
 
   const generateSystemOfferingReport = () => {
-    const totalZones = zones.length;
-    const totalAreas = areas.length;
-    const totalCells = cells.length;
-    const totalMeetings = meetings.length;
-    const totalOfferings = meetings.reduce((s, m) => s + (m.offering_amount || 0), 0);
+  const totalZones = zones.length;
+  const totalAreas = areas.length;
+  const totalCells = cells.length;
+  const totalMeetings = meetings.length;
+  const totalOfferings = meetings.reduce((s, m) => s + (m.offering_amount || 0), 0);
+  const totalVisitors = meetings.reduce((s, m: any) => s + ((m as any).visitors_count || 0), 0);
+  const totalConverts = meetings.reduce((s, m: any) => s + ((m as any).converts_count || 0), 0);
+  const totalFollowups = meetings.reduce((s, m: any) => s + ((m as any).followups_count || 0), 0);
+  const totalVisits = meetings.reduce((s, m: any) => s + ((m as any).visits_count || 0), 0);
     const areaData = areas.map((area) => {
       const aCells = cells.filter(c => c.area_id === area.id);
       const cellIds = aCells.map(c => c.id);
@@ -333,13 +341,13 @@ const SuperAdminDashboard = () => {
       };
     });
     setReportData({
-      title: 'System Offering Report',
-      period: `Generated on ${new Date().toLocaleDateString()}`,
-      summary: { totalZones, totalAreas, totalCells, totalMembers: members.length, totalMeetings, totalOfferings },
-      areas: areaData,
-    });
-    setShowReportModal(true);
-  };
+    title: 'System Offering Report',
+    period: `Generated on ${new Date().toLocaleDateString()}`,
+    summary: { totalZones, totalAreas, totalCells, totalMembers: members.length, totalMeetings, totalOfferings, totalVisitors, totalConverts, totalFollowups, totalVisits },
+    areas: areaData,
+  });
+  setShowReportModal(true);
+};
 
   const generateAreaPerformanceReportSA = () => {
     const totalZones = zones.length;
