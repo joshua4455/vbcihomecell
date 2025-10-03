@@ -565,10 +565,9 @@ const SuperAdminDashboard = () => {
     const totalVisits = periodMeetings.reduce((sum, m: any) => sum + ((m as any).visits_count || 0), 0);
     
     return {
-      type,
       title: `${type.charAt(0).toUpperCase() + type.slice(1)} Report`,
       period: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
-      data: {
+      summary: {
         totalMeetings: periodMeetings.length,
         totalAttendance,
         totalOfferings,
@@ -577,6 +576,12 @@ const SuperAdminDashboard = () => {
         totalFollowups,
         totalVisits,
         averageAttendance: periodMeetings.length > 0 ? Math.round(totalAttendance / periodMeetings.length) : 0,
+        totalZones: zones.length,
+        totalAreas: areas.length,
+        totalCells: cells.length,
+        totalMembers: members.length,
+      },
+      data: {
         areas: areaStats.map((area: any) => ({
           name: area.name,
           cells: area.totalCells,
